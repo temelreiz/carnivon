@@ -11,7 +11,26 @@ const config: NextConfig = {
     // Local public/ assets only; no remote hosts needed yet.
     formats: ["image/avif", "image/webp"],
   },
-  // Subdomain routing handled in middleware.ts
+  // Subdomain routing via native Next.js rewrites (more reliable than middleware with CDN cache).
+  // vault.carnivon.io/* → /vault/*
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/",
+          has: [{ type: "host", value: "vault.carnivon.io" }],
+          destination: "/vault",
+        },
+        {
+          source: "/:path((?!vault).*)*",
+          has: [{ type: "host", value: "vault.carnivon.io" }],
+          destination: "/vault/:path*",
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async headers() {
     return [
       {
