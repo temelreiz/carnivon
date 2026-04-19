@@ -1,9 +1,16 @@
+import { LogoMark } from "@/components/ui/Logo";
+
 export function Footer() {
   return (
     <footer className="mt-20 border-t border-forest-700/60">
       <div className="container-max py-16 grid md:grid-cols-4 gap-10">
         <div>
-          <div className="font-serif text-xl text-cream-50 mb-3">Carnivon</div>
+          <div className="flex items-center gap-2.5 mb-4">
+            <LogoMark size={24} />
+            <span className="font-serif text-xl tracking-[0.18em] uppercase text-cream-50">
+              Carnivon
+            </span>
+          </div>
           <p className="text-sm text-cream-100/60 leading-relaxed">
             Real Asset Yield Infrastructure. Institutional access to Brazilian
             livestock cycles.

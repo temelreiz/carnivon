@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LogoMark } from "@/components/ui/Logo";
 
 export const metadata: Metadata = {
   title: "Carnivon Vault",
@@ -11,8 +12,12 @@ export default function VaultLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-forest-700/60">
         <div className="container-max h-16 flex items-center justify-between">
-          <a href="/" className="font-serif text-xl tracking-tight text-cream-50">
-            Carnivon <span className="text-gold text-sm ml-1">Vault</span>
+          <a href="/" className="flex items-center gap-2.5">
+            <LogoMark size={24} />
+            <span className="font-serif text-xl tracking-[0.18em] uppercase text-cream-50">
+              Carnivon
+            </span>
+            <span className="text-gold text-xs uppercase tracking-[0.2em] ml-1">Vault</span>
           </a>
           <nav className="flex items-center gap-6 text-sm text-cream-100/70">
             <a href="/" className="hover:text-gold">Dashboard</a>

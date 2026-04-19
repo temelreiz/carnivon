@@ -1,6 +1,8 @@
+import { LogoMark } from "@/components/ui/Logo";
+
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pt-24 pb-32 md:pt-36 md:pb-44">
+    <section className="relative overflow-hidden pt-16 pb-32 md:pt-24 md:pb-44">
       {/* Subtle topographical lines */}
       <div
         aria-hidden
@@ -10,7 +12,15 @@ export function Hero() {
             "repeating-linear-gradient(115deg, #d4a84a 0 1px, transparent 1px 120px)",
         }}
       />
+      {/* Oversized watermark mark, ultra-subtle */}
+      <div
+        aria-hidden
+        className="absolute -right-20 top-1/2 -translate-y-1/2 opacity-[0.05] pointer-events-none hidden lg:block"
+      >
+        <LogoMark size={640} />
+      </div>
       <div className="container-max relative">
+        <LogoMark size={56} className="mb-8" />
         <div className="eyebrow mb-6">Real Asset Yield Infrastructure</div>
         <h1 className="text-5xl md:text-7xl lg:text-[88px] font-serif leading-[1.02] text-cream-50 max-w-5xl">
           Institutional access to<br />

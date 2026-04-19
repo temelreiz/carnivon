@@ -20,10 +20,16 @@ export const metadata: Metadata = {
   description:
     "Invest in short-duration Brazilian cattle cycles with audited operations and structured returns.",
   metadataBase: new URL("https://carnivon.io"),
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+  },
   openGraph: {
     title: "Carnivon",
     description: "Institutional Access to Livestock Yield",
     type: "website",
+    images: [{ url: "/logo-full.svg", width: 420, height: 200 }],
   },
   robots: { index: true, follow: true },
 };
