@@ -1,0 +1,171 @@
+// Carnivon — off-chain accounting + platform data
+// Token ledger on-chain; this tracks investors, subscriptions, cycle ops.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CycleStatus {
+  DRAFT
+  FUNDING
+  ACTIVE
+  MATURED
+  CLOSED
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InvestorType {
+  INDIVIDUAL
+  ENTITY
+}
+
+model Investor {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  name          String
+  entityName    String?
+  type          InvestorType @default(INDIVIDUAL)
+  jurisdiction  String
+  wallet        String?      @unique
+  kycStatus     KycStatus    @default(PENDING)
+  kycProvider   String?
+  kycSessionId  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  subscriptions Subscription[]
+  accessRequests AccessRequest[]
+  distributions Distribution[]
+}
+
+model AccessRequest {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  entity       String?
+  ticket       String
+  jurisdiction String
+  notes        String?
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  investor     Investor? @relation(fields: [investorId], references: [id])
+  investorId   String?
+}
+
+model Cycle {
+  id            String       @id @default(cuid())
+  symbol        String       @unique // e.g. CVC01
+  name          String
+  status        CycleStatus  @default(DRAFT)
+  durationDays  Int
+  startDate     DateTime?
+  maturityDate  DateTime?
+  targetReturn  String
+  minTicket     Int          // in USD cents
+  aumCents      BigInt       @default(0)
+  deployedPct   Int          @default(0)
+  spvEntity     String?
+  operator      String?
+  tokenAddress  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  subscriptions  Subscription[]
+  batches        LivestockBatch[]
+  costs          Cost[]
+  sales          Sale[]
+  distributions  Distribution[]
+  metrics        MetricsSnapshot[]
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  investor    Investor @relation(fields: [investorId], references: [id])
+  investorId  String
+  cycle       Cycle    @relation(fields: [cycleId], references: [id])
+  cycleId     String
+  amountCents BigInt
+  committedAt DateTime @default(now())
+  fundedAt    DateTime?
+  tokenAmount BigInt?  // minted tokens (1 token = $1 by default)
+  txHash      String?
+}
+
+model LivestockBatch {
+  id           String   @id @default(cuid())
+  cycle        Cycle    @relation(fields: [cycleId], references: [id])
+  cycleId      String
+  farm         String
+  headcount    Int
+  entryWeightKg Int
+  currentWeightKg Int?
+  sisbovRef    String?
+  acquiredAt   DateTime
+  mortalityCount Int    @default(0)
+}
+
+model Cost {
+  id        String   @id @default(cuid())
+  cycle     Cycle    @relation(fields: [cycleId], references: [id])
+  cycleId   String
+  category  String   // feed, logistics, veterinary, insurance, fees
+  amountCents BigInt
+  incurredAt DateTime
+  docRef    String?
+}
+
+model Sale {
+  id          String   @id @default(cuid())
+  cycle       Cycle    @relation(fields: [cycleId], references: [id])
+  cycleId     String
+  buyer       String
+  grossCents  BigInt
+  headSold    Int
+  soldAt      DateTime
+  docRef      String?
+}
+
+model Distribution {
+  id          String   @id @default(cuid())
+  cycle       Cycle    @relation(fields: [cycleId], references: [id])
+  cycleId     String
+  investor    Investor @relation(fields: [investorId], references: [id])
+  investorId  String
+  amountCents BigInt
+  distributedAt DateTime @default(now())
+  txHash      String?
+}
+
+model MetricsSnapshot {
+  id               String   @id @default(cuid())
+  cycle            Cycle    @relation(fields: [cycleId], references: [id])
+  cycleId          String
+  totalHeadcount   Int
+  avgEntryWeightKg Int
+  mortalityPctBp   Int      // basis points (120 = 1.2%)
+  daysInCycle      Int
+  deploymentPctBp  Int
+  expectedExit     String
+  createdAt        DateTime @default(now())
+}
+
+model Document {
+  id         String   @id @default(cuid())
+  title      String
+  kind       String   // term_sheet | subscription | risk | valuation | audit | traceability
+  version    String
+  storageKey String
+  publishedAt DateTime @default(now())
+  cycleSymbol String? // scoped per cycle if applicable
+}

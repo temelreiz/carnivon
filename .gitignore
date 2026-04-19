@@ -1,0 +1,24 @@
+node_modules
+.next
+out
+tsconfig.tsbuildinfo
+next-env.d.ts
+.env
+.env.local
+.env*.local
+.DS_Store
+*.log
+.vercel
+.turbo
+dist
+
+# Contracts
+contracts/node_modules
+contracts/artifacts
+contracts/cache
+contracts/typechain-types
+contracts/coverage
+contracts/coverage.json
+
+# Prisma
+prisma/.env
