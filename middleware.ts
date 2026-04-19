@@ -18,18 +18,24 @@ const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "carnivon.io";
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
+    // Include root, exclude Next internals and API so subdomain rewrite
+    // applies to every user-visible page including "/".
+    "/",
+    "/((?!api|_next/static|_next/image|favicon.ico|favicon.svg|robots.txt|sitemap.xml|logo|.*\\.png|.*\\.jpg|.*\\.svg).*)",
   ],
 };
 
 export default function middleware(req: NextRequest) {
   const url = req.nextUrl;
-  const hostname = req.headers.get("host") || "";
-  const bareHost = hostname.replace(/:\d+$/, "");
+  // On Vercel, `x-forwarded-host` carries the original public host; fall back
+  // to `host` for local dev.
+  const rawHost =
+    req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const bareHost = rawHost.replace(/:\d+$/, "").toLowerCase();
 
   const isVault =
-    bareHost.startsWith("vault.") ||
     bareHost === `vault.${ROOT_DOMAIN}` ||
+    bareHost.startsWith("vault.") ||
     bareHost === "vault.carnivon.localhost";
 
   // If on vault subdomain and request path doesn't already start with /vault, rewrite it in
