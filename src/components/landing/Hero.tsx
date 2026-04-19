@@ -1,4 +1,4 @@
-import { LogoMark } from "@/components/ui/Logo";
+import { LogoFull, LogoMark } from "@/components/ui/Logo";
 
 export function Hero() {
   return (
@@ -12,15 +12,15 @@ export function Hero() {
             "repeating-linear-gradient(115deg, #d4a84a 0 1px, transparent 1px 120px)",
         }}
       />
-      {/* Oversized watermark mark, ultra-subtle */}
+      {/* Oversized watermark mark, ultra-subtle (right side) */}
       <div
         aria-hidden
-        className="absolute -right-20 top-1/2 -translate-y-1/2 opacity-[0.05] pointer-events-none hidden lg:block"
+        className="absolute -right-28 top-1/2 -translate-y-1/2 opacity-[0.06] pointer-events-none hidden lg:block"
       >
-        <LogoMark size={640} />
+        <LogoMark size={520} />
       </div>
       <div className="container-max relative">
-        <LogoMark size={56} className="mb-8" />
+        <LogoFull width={180} height={86} priority className="mb-10 -ml-2" />
         <div className="eyebrow mb-6">Real Asset Yield Infrastructure</div>
         <h1 className="text-5xl md:text-7xl lg:text-[88px] font-serif leading-[1.02] text-cream-50 max-w-5xl">
           Institutional access to<br />

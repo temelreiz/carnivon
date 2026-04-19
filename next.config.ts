@@ -7,6 +7,10 @@ const config: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  images: {
+    // Local public/ assets only; no remote hosts needed yet.
+    formats: ["image/avif", "image/webp"],
+  },
   // Subdomain routing handled in middleware.ts
   async headers() {
     return [

@@ -1,42 +1,76 @@
-export function LogoMark({ className = "", size = 28 }: { className?: string; size?: number }) {
+import Image from "next/image";
+
+/**
+ * Logo source: public/logo.png (1024x1024, black bg, gold mark + wordmark).
+ *
+ * The full lockup fills ~centered square with:
+ *   - mark (horns + arrow)  ~ x:33%..67%, y:27%..56%
+ *   - wordmark "CARNIVON"   ~ x:18%..82%, y:59%..72%
+ *
+ * Two presentations:
+ *   <LogoMark/>  — crops to mark-only using background-position
+ *   <LogoFull/>  — full lockup as <Image>
+ */
+
+export function LogoMark({
+  size = 28,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
+  // Mark region inside source: x ≈ 33%..67% (width 34%), y ≈ 27%..56% (height 29%)
+  // Render as a fixed square; use background-image with positioned sprite math.
+  // Source dims 1024x1024 → mark box ≈ 348px wide, 300px tall at (338, 276).
+  // Scale background so that the mark box = `size × size` rendered.
+  const scale = size / 348; // 1 "mark pixel" = scale CSS pixels
+  const bgW = 1024 * scale;
+  const bgH = 1024 * scale;
+  const bgX = -338 * scale;
+  const bgY = -276 * scale;
+
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 120 120"
-      fill="none"
+    <span
       role="img"
       aria-label="Carnivon"
+      className={`inline-block ${className}`}
+      style={{
+        width: size,
+        height: size * (300 / 348), // preserve aspect
+        backgroundImage: "url(/logo.png)",
+        backgroundSize: `${bgW}px ${bgH}px`,
+        backgroundPosition: `${bgX}px ${bgY}px`,
+        backgroundRepeat: "no-repeat",
+        // Drop the black padding from the source PNG so the mark blends with the page
+        mixBlendMode: "screen",
+      }}
+    />
+  );
+}
+
+export function LogoFull({
+  width = 220,
+  height = 105,
+  priority = false,
+  className = "",
+}: {
+  width?: number;
+  height?: number;
+  priority?: boolean;
+  className?: string;
+}) {
+  return (
+    <Image
+      src="/logo.png"
+      width={width}
+      height={height}
+      alt="Carnivon"
+      priority={priority}
       className={className}
-    >
-      <defs>
-        <linearGradient id="lm-horn" x1="10" y1="10" x2="110" y2="110" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#e9c671" />
-          <stop offset="0.45" stopColor="#c89a3f" />
-          <stop offset="1" stopColor="#8a6528" />
-        </linearGradient>
-        <linearGradient id="lm-core" x1="60" y1="20" x2="60" y2="100" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#f4dc92" />
-          <stop offset="0.6" stopColor="#c89a3f" />
-          <stop offset="1" stopColor="#6b4a1c" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M60 40 C 40 30, 18 34, 8 44 C 24 42, 38 48, 50 58 C 44 52, 40 46, 38 40 C 40 44, 46 48, 54 50 L 60 44 Z"
-        fill="url(#lm-horn)"
-      />
-      <path
-        d="M60 40 C 80 30, 102 34, 112 44 C 96 42, 82 48, 70 58 C 76 52, 80 46, 82 40 C 80 44, 74 48, 66 50 L 60 44 Z"
-        fill="url(#lm-horn)"
-      />
-      <path
-        d="M60 22 L 72 38 L 68 38 L 68 58 L 72 58 L 60 98 L 48 58 L 52 58 L 52 38 L 48 38 Z"
-        fill="url(#lm-core)"
-      />
-      <path d="M60 26 L 66 36 L 54 36 Z" fill="#f4dc92" />
-      <path d="M38 56 L 50 70 L 48 76 L 34 62 Z" fill="url(#lm-horn)" />
-      <path d="M82 56 L 70 70 L 72 76 L 86 62 Z" fill="url(#lm-horn)" />
-    </svg>
+      // Source PNG has a black background; screen blend drops the black so
+      // the gold mark sits directly on the page background.
+      style={{ objectFit: "contain", mixBlendMode: "screen" }}
+    />
   );
 }
 
