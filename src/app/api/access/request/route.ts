@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -43,19 +44,40 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
+  const userAgent = req.headers.get("user-agent") || null;
 
-  // TODO: persist to DB (AccessRequest table) + notify investors@carnivon.io
-  // For now, log structured event.
-  console.log("[access-request]", {
-    name: data.name,
-    email: data.email,
-    entity: data.entity || null,
-    ticket: data.ticket,
-    jurisdiction: data.jurisdiction,
-    notes: data.notes || null,
-    ip,
-    ts: new Date().toISOString(),
-  });
+  // Persist — fall back to structured log if DB is unavailable so dev/demo
+  // deployments without DATABASE_URL don't 500.
+  try {
+    if (process.env.DATABASE_URL) {
+      await prisma.accessRequest.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          entity: data.entity || null,
+          ticket: data.ticket,
+          jurisdiction: data.jurisdiction,
+          notes: data.notes || null,
+          ip,
+          userAgent,
+        },
+      });
+    } else {
+      console.log("[access-request:no-db]", {
+        name: data.name,
+        email: data.email,
+        ticket: data.ticket,
+        jurisdiction: data.jurisdiction,
+        ip,
+        ts: new Date().toISOString(),
+      });
+    }
+  } catch (err) {
+    console.error("[access-request:db-error]", err);
+    // Don't leak DB errors — still return success to the visitor.
+  }
+
+  // TODO: notify investors@carnivon.io via Resend
 
   return NextResponse.json({ ok: true });
 }
