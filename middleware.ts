@@ -1,17 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 
-/**
- * Subdomain routing is handled in next.config.ts via `rewrites` (more reliable
- * with Vercel's edge cache than middleware-based rewrites).
- *
- * This middleware only blocks direct access to /vault on the marketing domain
- * in production.
- */
 export const config = {
   matcher: ["/vault/:path*"],
 };
 
-export default function middleware(req: NextRequest) {
+export default auth((req) => {
   const host = (
     req.headers.get("x-forwarded-host") ||
     req.headers.get("host") ||
@@ -22,9 +16,20 @@ export default function middleware(req: NextRequest) {
 
   const isVault = host.startsWith("vault.");
 
+  // On the marketing domain in prod, /vault should 404 — vault is
+  // served from vault.carnivon.io via next.config rewrites.
   if (!isVault && process.env.NODE_ENV === "production") {
-    return NextResponse.rewrite(new URL("/404", req.url));
+    return NextResponse.rewrite(new URL("/404", req.nextUrl));
+  }
+
+  const { pathname } = req.nextUrl;
+  const isLogin = pathname === "/vault/login" || pathname.startsWith("/vault/login/");
+
+  if (!isLogin && !req.auth) {
+    const loginUrl = new URL("/vault/login", req.nextUrl);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
-}
+});

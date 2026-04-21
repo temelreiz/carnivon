@@ -18,7 +18,7 @@ export function ProductCard({ product }: { product: Product }) {
       id="product"
       eyebrow="Current Cycle"
       title="Carnivon Brazil Cattle Cycle 01"
-      intro="A structured, asset-backed participation in a single 150-day Brazilian cattle cycle. Audited, permissioned, and capacity-limited."
+      intro="A structured, asset-backed participation in a single 90-day Brazilian cattle cycle. Audited, permissioned, and capacity-limited."
     >
       <div className="card">
         {/* Header bar */}

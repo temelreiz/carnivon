@@ -31,8 +31,8 @@ export function Hero() {
           operations, verified supply chains, and structured returns.
         </p>
         <div className="mt-10 flex flex-wrap items-center gap-4">
-          <a href="#access" className="btn-primary">
-            Request Access
+          <a href="/vault/login" className="btn-primary">
+            Sign In
           </a>
           <a href="#product" className="btn-secondary">
             View Current Cycle
@@ -41,8 +41,8 @@ export function Hero() {
 
         <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-x-10 gap-y-6 max-w-3xl">
           <HeroStat label="Target return" value="10–16%" sub="annualized" />
-          <HeroStat label="Cycle length" value="150 days" sub="average" />
-          <HeroStat label="Minimum" value="$50,000" sub="per ticket" />
+          <HeroStat label="Cycle length" value="90 days" sub="300→450 kg live" />
+          <HeroStat label="Minimum" value="1 animal" sub="per allocation" />
           <HeroStat label="Status" value="Open" sub="CVC01" />
         </div>
       </div>

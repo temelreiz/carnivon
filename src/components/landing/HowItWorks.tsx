@@ -30,7 +30,7 @@ export function HowItWorks() {
       id="how"
       eyebrow="How it works"
       title="Three phases. One cycle."
-      intro="Each Carnivon cycle is a self-contained, time-bound investment: from commitment to realization in roughly 150 days."
+      intro="Each Carnivon cycle is a self-contained, time-bound investment: from commitment to realization in roughly 90 days."
     >
       <div className="grid md:grid-cols-3 gap-px bg-forest-700/40 border border-forest-700/60">
         {steps.map((s) => (

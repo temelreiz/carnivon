@@ -32,9 +32,9 @@ export function AccessForm() {
   return (
     <Section
       id="access"
-      eyebrow="Access"
-      title="Request access to the cycle."
-      intro="Institutional and qualified investors only. We reply within two business days with the full data room and subscription path."
+      eyebrow="Institutional inquiries"
+      title="Allocations above $500,000."
+      intro="Individual investors can sign in directly. This form is for family offices, funds, and institutional allocators with tickets above $500k — we reply within two business days with the full data room and subscription path."
     >
       {status === "ok" ? (
         <div className="card p-10 text-center">
