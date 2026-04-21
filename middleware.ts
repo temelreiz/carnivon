@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 export const config = {
-  matcher: ["/vault/:path*"],
+  matcher: ["/vault/:path*", "/admin/:path*"],
 };
 
 export default auth((req) => {
@@ -14,16 +14,23 @@ export default auth((req) => {
     .replace(/:\d+$/, "")
     .toLowerCase();
 
-  const isVault = host.startsWith("vault.");
+  const { pathname } = req.nextUrl;
+  const isVaultPath = pathname.startsWith("/vault");
 
-  // On the marketing domain in prod, /vault should 404 — vault is
-  // served from vault.carnivon.io via next.config rewrites.
-  if (!isVault && process.env.NODE_ENV === "production") {
-    return NextResponse.rewrite(new URL("/404", req.nextUrl));
+  // Marketing domain in prod only hosts /vault via vault.carnivon.io rewrites;
+  // /admin lives on the marketing domain (vault.* 404s it).
+  if (process.env.NODE_ENV === "production") {
+    const isVaultHost = host.startsWith("vault.");
+    if (isVaultPath && !isVaultHost) {
+      return NextResponse.rewrite(new URL("/404", req.nextUrl));
+    }
+    if (pathname.startsWith("/admin") && isVaultHost) {
+      return NextResponse.rewrite(new URL("/404", req.nextUrl));
+    }
   }
 
-  const { pathname } = req.nextUrl;
-  const isLogin = pathname === "/vault/login" || pathname.startsWith("/vault/login/");
+  const isLogin =
+    pathname === "/vault/login" || pathname.startsWith("/vault/login/");
 
   if (!isLogin && !req.auth) {
     const loginUrl = new URL("/vault/login", req.nextUrl);
