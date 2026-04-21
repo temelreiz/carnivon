@@ -52,4 +52,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/vault/login",
   },
   providers,
+  callbacks: {
+    // With JWT strategy the adapter still creates the User row, but the
+    // user.id needs to be piped through the token into session.user.id
+    // manually — otherwise it's undefined at read time.
+    jwt({ token, user }) {
+      if (user?.id) token.sub = user.id;
+      return token;
+    },
+    session({ session, token }) {
+      if (token.sub) session.user.id = token.sub;
+      return session;
+    },
+  },
 });
