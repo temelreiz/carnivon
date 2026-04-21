@@ -9,24 +9,28 @@ import { Documents } from "@/components/landing/Documents";
 import { AccessForm } from "@/components/landing/AccessForm";
 import { Footer } from "@/components/landing/Footer";
 import { mockProduct, mockMetrics, mockDocuments } from "@/lib/mock-data";
+import { getCurrentAnimalPrice } from "@/lib/product-pricing";
 
-// In production these would be SSR-fetched from internal APIs.
 async function loadData() {
+  const pricing = await getCurrentAnimalPrice().catch(() => null);
   return {
-    product: mockProduct,
+    product: pricing
+      ? { ...mockProduct, min_ticket: pricing.display }
+      : mockProduct,
     metrics: mockMetrics,
     documents: mockDocuments,
+    pricing,
   };
 }
 
 export default async function LandingPage() {
-  const { product, metrics, documents } = await loadData();
+  const { product, metrics, documents, pricing } = await loadData();
 
   return (
     <>
       <Nav />
       <main>
-        <Hero />
+        <Hero minDisplay={product.min_ticket} pricingAsOf={pricing?.asOf} />
         <ProductCard product={product} />
         <HowItWorks />
         <LiveMetrics metrics={metrics} />

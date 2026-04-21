@@ -1,6 +1,12 @@
 import { LogoFull, LogoMark } from "@/components/ui/Logo";
 
-export function Hero() {
+export function Hero({
+  minDisplay = "1 animal",
+  pricingAsOf,
+}: {
+  minDisplay?: string;
+  pricingAsOf?: string;
+}) {
   return (
     <section className="relative overflow-hidden pt-16 pb-32 md:pt-24 md:pb-44">
       {/* Subtle topographical lines */}
@@ -42,7 +48,11 @@ export function Hero() {
         <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-x-10 gap-y-6 max-w-3xl">
           <HeroStat label="Target return" value="10–16%" sub="annualized" />
           <HeroStat label="Cycle length" value="90 days" sub="300→450 kg live" />
-          <HeroStat label="Minimum" value="1 animal" sub="per allocation" />
+          <HeroStat
+            label="Minimum"
+            value={minDisplay}
+            sub={pricingAsOf ? `as of ${pricingAsOf}` : "per allocation"}
+          />
           <HeroStat label="Status" value="Open" sub="CVC01" />
         </div>
       </div>

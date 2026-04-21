@@ -29,6 +29,12 @@ enum InvestorType {
   ENTITY
 }
 
+enum AnimalStatus {
+  ACTIVE
+  SOLD
+  DEAD
+}
+
 model Investor {
   id            String       @id @default(cuid())
   email         String       @unique
@@ -62,9 +68,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  investor Investor?
+  accounts     Account[]
+  sessions     Session[]
+  investor     Investor?
+  weightEntries WeightEntry[]
 }
 
 model Account {
@@ -136,6 +143,7 @@ model Cycle {
 
   subscriptions  Subscription[]
   batches        LivestockBatch[]
+  animals        Animal[]
   costs          Cost[]
   sales          Sale[]
   distributions  Distribution[]
@@ -166,6 +174,74 @@ model LivestockBatch {
   sisbovRef    String?
   acquiredAt   DateTime
   mortalityCount Int    @default(0)
+
+  animals      Animal[]
+}
+
+// Individual head, identified by ear-tag (brinco) number.
+model Animal {
+  id             String       @id @default(cuid())
+  earTag         String       @unique           // brinco — primary business identifier
+  cycle          Cycle        @relation(fields: [cycleId], references: [id])
+  cycleId        String
+  batch          LivestockBatch? @relation(fields: [batchId], references: [id])
+  batchId        String?
+  status         AnimalStatus @default(ACTIVE)
+  entryWeightKg  Int                            // weight at cycle entry (target 300)
+  currentWeightKg Int?                          // denormalised latest WeightEntry
+  acquiredAt     DateTime
+  soldAt         DateTime?
+  diedAt         DateTime?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  weights        WeightEntry[]
+
+  @@index([cycleId])
+}
+
+// Weekly manual weight reading. Provides an audit trail; currentWeightKg on
+// Animal is the latest entry denormalised for fast reads.
+model WeightEntry {
+  id          String   @id @default(cuid())
+  animal      Animal   @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  animalId    String
+  weightKg    Int
+  recordedAt  DateTime                         // date the weight was read
+  enteredBy   User?    @relation(fields: [enteredById], references: [id])
+  enteredById String?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([animalId, recordedAt])
+}
+
+// CEPEA/Esalq "Boi Gordo" arroba indicator (BRL per @ of carcass, 15 kg).
+// One row per day; unique on (source, date) so scraper re-runs are idempotent.
+model CattlePrice {
+  id          String   @id @default(cuid())
+  source      String                           // "CEPEA_BOI_GORDO"
+  date        DateTime @db.Date                // market date in São Paulo
+  pricePerArrobaBRL Int                        // in BRL cents (e.g. 32750 = R$ 327.50)
+  rawPayload  Json?                            // scraper response for audit
+  fetchedAt   DateTime @default(now())
+
+  @@unique([source, date])
+  @@index([date])
+}
+
+// BRL → USD FX rate snapshot.
+model FxRate {
+  id        String   @id @default(cuid())
+  pair      String                             // "BRL_USD"
+  date      DateTime @db.Date
+  rate      Float                              // USD per 1 BRL (e.g. 0.1840)
+  source    String                             // "frankfurter" | "exchangerate.host"
+  fetchedAt DateTime @default(now())
+
+  @@unique([pair, date])
+  @@index([date])
 }
 
 model Cost {
