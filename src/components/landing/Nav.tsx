@@ -35,8 +35,8 @@ export function Nav() {
           >
             Vault
           </a>
-          <a href="#access" className="btn-primary text-xs">
-            Request Access
+          <a href="/vault/login" className="btn-primary text-xs">
+            Sign In
           </a>
         </div>
       </div>

@@ -33,14 +33,14 @@ export type DocumentLink = {
 export const mockProduct: Product = {
   name: "Carnivon Brazil Cattle Cycle 01",
   symbol: "CVC01",
-  duration_days: 150,
+  duration_days: 90,
   target_return: "10–16% (annualized target)",
   status: "Open",
   aum: "$1,200,000",
   deployed: "35%",
-  min_ticket: "$50,000",
+  min_ticket: "1 animal",
   start_date: "2026-06-01",
-  maturity_date: "2026-10-29",
+  maturity_date: "2026-08-30",
 };
 
 export const mockMetrics: LiveMetrics = {
