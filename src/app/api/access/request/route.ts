@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { sendAccessRequestNotification } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -77,7 +78,20 @@ export async function POST(req: NextRequest) {
     // Don't leak DB errors — still return success to the visitor.
   }
 
-  // TODO: notify investors@carnivon.io via Resend
+  try {
+    await sendAccessRequestNotification({
+      name: data.name,
+      email: data.email,
+      entity: data.entity || null,
+      ticket: data.ticket,
+      jurisdiction: data.jurisdiction,
+      notes: data.notes || null,
+      ip,
+      userAgent,
+    });
+  } catch (err) {
+    console.error("[access-request:email-error]", err);
+  }
 
   return NextResponse.json({ ok: true });
 }
