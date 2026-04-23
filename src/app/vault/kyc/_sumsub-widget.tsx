@@ -33,7 +33,38 @@ export function SumsubWidget() {
 
         const sdk = snsWebSdk
           .init(accessToken, fetchToken)
-          .withConf({ lang: "en" })
+          .withConf({
+            lang: "en",
+            theme: "dark",
+            // Sumsub honours CSS custom properties via this map. Keep values
+            // in sync with tailwind.config (forest + gold palette).
+            uiConf: {
+              customCssStr: `
+                :root {
+                  --black: #f4ecdc;
+                  --white: #0e1a11;
+                  --primary-text-color: #f4ecdc;
+                  --secondary-text-color: rgba(244, 236, 220, 0.7);
+                  --tertiary-text-color: rgba(244, 236, 220, 0.5);
+                  --primary-background-color: #0e1a11;
+                  --secondary-background-color: #132018;
+                  --tertiary-background-color: #1b2a20;
+                  --default-border-color: rgba(52, 72, 56, 0.6);
+                  --primary-color: #d4a84a;
+                  --primary-color-hover: #e5bd5d;
+                  --primary-color-active: #c49737;
+                  --selection-color: rgba(212, 168, 74, 0.15);
+                  --error-color: #ef4444;
+                  --success-color: #d4a84a;
+                }
+                body, .sumsub-kyc-container {
+                  background: #0e1a11 !important;
+                  color: #f4ecdc !important;
+                  font-family: ui-sans-serif, system-ui, sans-serif;
+                }
+              `,
+            },
+          })
           .withOptions({ addViewportTag: false, adaptIframeHeight: true })
           .on("idCheck.onError", (err: unknown) => {
             console.error("[sumsub]", err);
