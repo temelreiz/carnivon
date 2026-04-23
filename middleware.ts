@@ -29,10 +29,13 @@ export default auth((req) => {
     }
   }
 
-  const isLogin =
-    pathname === "/vault/login" || pathname.startsWith("/vault/login/");
+  const isPublicAuthRoute =
+    pathname.startsWith("/vault/login") ||
+    pathname.startsWith("/vault/signup") ||
+    pathname.startsWith("/vault/forgot") ||
+    pathname.startsWith("/vault/reset");
 
-  if (!isLogin && !req.auth) {
+  if (!isPublicAuthRoute && !req.auth) {
     const loginUrl = new URL("/vault/login", req.nextUrl);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
