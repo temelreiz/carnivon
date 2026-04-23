@@ -14,6 +14,9 @@ importers:
       '@prisma/client':
         specifier: ^5.22.0
         version: 5.22.0(prisma@5.22.0)
+      '@sumsub/websdk':
+        specifier: ^2.6.2
+        version: 2.6.2
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -496,6 +499,9 @@ packages:
 
   '@stablelib/base64@1.0.1':
     resolution: {integrity: sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==}
+
+  '@sumsub/websdk@2.6.2':
+    resolution: {integrity: sha512-khwBMFwgXGstg9kyG4cyG191y/CHKnAoFtxPq+xDOKetjKZaLh61jJ0nHZbhmnbwVmTk58JL+Pjveh6/BjPHTg==}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -1272,6 +1278,8 @@ snapshots:
       '@prisma/debug': 5.22.0
 
   '@stablelib/base64@1.0.1': {}
+
+  '@sumsub/websdk@2.6.2': {}
 
   '@swc/helpers@0.5.15':
     dependencies:

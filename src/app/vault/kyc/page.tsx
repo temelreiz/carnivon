@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { getOrCreateInvestor } from "@/lib/investor";
 import type { KycStatus } from "@prisma/client";
+import { SumsubWidget } from "./_sumsub-widget";
 
 async function saveProfile(formData: FormData) {
   "use server";
@@ -39,47 +40,6 @@ async function saveProfile(formData: FormData) {
 
   revalidatePath("/vault");
   revalidatePath("/vault/kyc");
-}
-
-async function startKyc() {
-  "use server";
-  const session = await auth();
-  if (!session?.user) redirect("/vault/login");
-
-  const investor = await getOrCreateInvestor({
-    id: session.user.id!,
-    email: session.user.email,
-    name: session.user.name,
-  });
-
-  // Kick off a KYC session with the upstream provider. Currently the
-  // /api/kyc/init route is a stub — it returns a synthetic session id and a
-  // hosted URL; once Sumsub / Onfido is wired, replace-in-place.
-  const res = await fetch(
-    `${process.env.AUTH_URL ?? "http://localhost:3000"}/api/kyc/init`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: investor.email, entity_type: investor.type === "ENTITY" ? "entity" : "individual" }),
-    }
-  );
-
-  if (!res.ok) {
-    console.error("[vault/kyc] init failed", await res.text());
-    throw new Error("Could not start KYC session. Try again in a moment.");
-  }
-
-  const data = (await res.json()) as { session_id: string; hosted_url: string };
-
-  await prisma.investor.update({
-    where: { id: investor.id },
-    data: {
-      kycProvider: "stub",
-      kycSessionId: data.session_id,
-    },
-  });
-
-  redirect(data.hosted_url);
 }
 
 export default async function KycPage() {
@@ -189,22 +149,18 @@ export default async function KycPage() {
               </a>{" "}
               and we&apos;ll unblock you.
             </p>
+          ) : !step2Ready ? (
+            <p className="text-sm text-cream-100/60">
+              Complete your profile above to unlock identity verification.
+            </p>
           ) : (
             <>
               <p className="text-sm text-cream-100/70 mb-6">
-                Opens a session with our identity provider. You&apos;ll need an
-                ID document and a selfie (entities: certificate of incorporation
-                and beneficial owner disclosures).
+                Our identity provider (Sumsub) will guide you through ID and
+                liveness checks below. Entities: certificate of incorporation
+                and beneficial owner disclosures also required.
               </p>
-              <form action={startKyc}>
-                <button
-                  type="submit"
-                  disabled={!step2Ready}
-                  className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {step2Ready ? "Start verification" : "Complete profile first"}
-                </button>
-              </form>
+              <SumsubWidget />
             </>
           )}
         </div>
