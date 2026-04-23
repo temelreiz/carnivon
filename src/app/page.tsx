@@ -9,10 +9,10 @@ import { Documents } from "@/components/landing/Documents";
 import { AccessForm } from "@/components/landing/AccessForm";
 import { Footer } from "@/components/landing/Footer";
 import { mockProduct, mockMetrics, mockDocuments } from "@/lib/mock-data";
-import { getCurrentAnimalPrice } from "@/lib/product-pricing";
+import { getCurrentHeadPrice } from "@/lib/product-pricing";
 
 async function loadData() {
-  const pricing = await getCurrentAnimalPrice().catch(() => null);
+  const pricing = await getCurrentHeadPrice().catch(() => null);
   return {
     product: pricing
       ? { ...mockProduct, min_ticket: pricing.display }

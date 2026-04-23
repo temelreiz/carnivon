@@ -1,7 +1,7 @@
 import { LogoFull, LogoMark } from "@/components/ui/Logo";
 
 export function Hero({
-  minDisplay = "1 animal",
+  minDisplay = "1 head",
   pricingAsOf,
 }: {
   minDisplay?: string;

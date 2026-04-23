@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { isAdmin } from "@/lib/admin";
-import { computeAnimalPrice, formatUSD } from "@/lib/pricing";
+import { computeHeadPrice, formatUSD } from "@/lib/pricing";
 
 async function submitArroba(formData: FormData) {
   "use server";
@@ -61,7 +61,7 @@ export default async function AdminPricingPage() {
   const preview = (arroba: number) =>
     latestFx
       ? formatUSD(
-          computeAnimalPrice({
+          computeHeadPrice({
             arrobaBRL: arroba,
             usdPerBRL: latestFx.rate,
           }).investorPriceUSD
@@ -135,7 +135,7 @@ export default async function AdminPricingPage() {
                 <th className="text-left p-4">Date</th>
                 <th className="text-left p-4">Source</th>
                 <th className="text-right p-4">BRL / @</th>
-                <th className="text-right p-4">≈ 1 animal</th>
+                <th className="text-right p-4">≈ 1 head</th>
               </tr>
             </thead>
             <tbody className="text-cream-100/90">

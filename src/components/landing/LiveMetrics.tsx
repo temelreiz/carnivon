@@ -4,7 +4,7 @@ import { Section } from "@/components/ui/Section";
 export function LiveMetrics({ metrics }: { metrics: LiveMetricsT }) {
   const items = [
     { label: "Total headcount", value: metrics.total_headcount.toLocaleString(), sub: "head allocated" },
-    { label: "Avg entry weight", value: metrics.avg_entry_weight, sub: "per animal" },
+    { label: "Avg entry weight", value: metrics.avg_entry_weight, sub: "per head" },
     { label: "Mortality rate", value: metrics.mortality_rate, sub: "cycle-to-date" },
     { label: "Days in cycle", value: metrics.days_in_cycle.toString(), sub: "elapsed" },
     { label: "Deployment", value: metrics.deployment_ratio, sub: "of capital" },
