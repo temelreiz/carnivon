@@ -40,6 +40,12 @@ export default async function AdminLayout({
             <Link href="/admin/head" className="hover:text-gold">
               Head
             </Link>
+            <Link href="/admin/deposits" className="hover:text-gold">
+              Deposits
+            </Link>
+            <Link href="/admin/wallets" className="hover:text-gold">
+              Wallets
+            </Link>
             <Link href="/admin/pricing" className="hover:text-gold">
               Pricing
             </Link>

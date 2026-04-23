@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
 import { getOrCreateInvestor } from "@/lib/investor";
 
 export default async function VaultDashboard() {
@@ -13,12 +14,27 @@ export default async function VaultDashboard() {
     name: session.user.name,
   });
 
+  const [pendingCount, confirmedCount, openCycle] = await Promise.all([
+    prisma.deposit.count({
+      where: { investorId: investor.id, status: "PENDING" },
+    }),
+    prisma.deposit.count({
+      where: { investorId: investor.id, status: "CONFIRMED" },
+    }),
+    prisma.cycle.findFirst({
+      where: { status: { in: ["FUNDING", "ACTIVE"] } },
+      orderBy: { createdAt: "desc" },
+      select: { symbol: true },
+    }),
+  ]);
+
   const firstName =
     (investor.name || session.user.name || session.user.email || "investor")
       .split(/[ @]/)[0];
 
-  const kycPending = investor.kycStatus === "PENDING";
+  const kycApproved = investor.kycStatus === "APPROVED";
   const jurisdictionMissing = investor.jurisdiction === "UNSET";
+  const kycBlocking = !kycApproved || jurisdictionMissing;
 
   return (
     <div className="container-max py-16">
@@ -31,21 +47,52 @@ export default async function VaultDashboard() {
         cycles.
       </p>
 
-      {kycPending || jurisdictionMissing ? (
+      {kycBlocking ? (
         <div className="mb-10 border border-gold/50 bg-forest-900/40 p-6">
           <div className="eyebrow mb-2">Action required</div>
           <p className="text-sm text-cream-100/80 mb-4">
-            Complete your onboarding before subscribing to a cycle —
-            jurisdiction and identity verification are required for the
-            subscription agreement.
+            Complete KYC before subscribing to a cycle — jurisdiction and
+            identity verification are required on the subscription agreement.
           </p>
           <Link href="/vault/kyc" className="btn-primary text-xs">
             Continue onboarding →
           </Link>
         </div>
+      ) : openCycle && pendingCount === 0 && confirmedCount === 0 ? (
+        <div className="mb-10 border border-gold/50 bg-forest-900/40 p-6">
+          <div className="eyebrow mb-2">{openCycle.symbol} is open</div>
+          <p className="text-sm text-cream-100/80 mb-4">
+            Subscribe by sending crypto to our deposit address. We credit your
+            position on confirmation.
+          </p>
+          <Link href="/vault/invest" className="btn-primary text-xs">
+            Invest in {openCycle.symbol} →
+          </Link>
+        </div>
       ) : null}
 
       <div className="grid md:grid-cols-3 gap-6">
+        <VaultCard
+          title="Invest"
+          body={
+            openCycle
+              ? `Subscribe to ${openCycle.symbol} with BTC, ETH, USDC, or USDT.`
+              : "No open cycle right now."
+          }
+          href="/vault/invest"
+          highlight={!kycBlocking && !!openCycle && confirmedCount === 0}
+        />
+        <VaultCard
+          title="Deposits"
+          body={
+            pendingCount > 0
+              ? `${pendingCount} pending verification, ${confirmedCount} confirmed.`
+              : confirmedCount > 0
+                ? `${confirmedCount} confirmed deposit(s).`
+                : "No deposits yet."
+          }
+          href="/vault/deposits"
+        />
         <VaultCard
           title="Positions"
           body="Your subscriptions, allocated head, and NAV per cycle."
@@ -66,7 +113,7 @@ export default async function VaultDashboard() {
                 : "Pending — complete or renew your onboarding."
           }
           href="/vault/kyc"
-          highlight={kycPending || jurisdictionMissing}
+          highlight={kycBlocking}
         />
       </div>
     </div>

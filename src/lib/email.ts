@@ -6,6 +6,48 @@ const to = process.env.ACCESS_REQUEST_TO || "investors@carnivon.io";
 
 const resend = apiKey ? new Resend(apiKey) : null;
 
+export async function sendDepositNotification(p: {
+  depositId: string;
+  investorEmail: string;
+  investorName: string;
+  cycleSymbol: string;
+  chain: string;
+  asset: string;
+  amountUSD: number;
+  amountCrypto: string | null;
+  txHash: string;
+}) {
+  if (!resend) {
+    console.log("[email:no-resend-key] deposit →", { to, depositId: p.depositId });
+    return;
+  }
+
+  const subject = `Deposit pending — ${p.investorName} · ${p.asset} · $${p.amountUSD.toLocaleString("en-US")}`;
+  const text = [
+    `Investor: ${p.investorName} <${p.investorEmail}>`,
+    `Cycle: ${p.cycleSymbol}`,
+    `Chain: ${p.chain}`,
+    `Asset: ${p.asset}`,
+    `Declared USD: $${p.amountUSD.toLocaleString("en-US")}`,
+    p.amountCrypto ? `Crypto amount: ${p.amountCrypto} ${p.asset}` : null,
+    `Tx hash: ${p.txHash}`,
+    "",
+    "Verify the transaction on-chain, then approve or reject at:",
+    "https://vault.carnivon.io/admin/deposits",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    replyTo: p.investorEmail,
+    subject,
+    text,
+  });
+  if (error) console.error("[email:deposit-notify-failed]", error);
+}
+
 export async function sendPasswordReset({
   email,
   resetUrl,

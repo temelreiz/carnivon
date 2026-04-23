@@ -35,6 +35,12 @@ enum AnimalStatus {
   DEAD
 }
 
+enum DepositStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
 model Investor {
   id            String       @id @default(cuid())
   email         String       @unique
@@ -55,6 +61,7 @@ model Investor {
   subscriptions Subscription[]
   accessRequests AccessRequest[]
   distributions Distribution[]
+  deposits      Deposit[]
 }
 
 // --- Auth.js v5 models ---
@@ -149,6 +156,7 @@ model Cycle {
   sales          Sale[]
   distributions  Distribution[]
   metrics        MetricsSnapshot[]
+  deposits       Deposit[]
 }
 
 model Subscription {
@@ -162,6 +170,60 @@ model Subscription {
   fundedAt    DateTime?
   tokenAmount BigInt?  // minted tokens (1 token = $1 by default)
   txHash      String?
+
+  deposit     Deposit?
+}
+
+// Static house-wallet addresses per chain/asset. Operator creates them
+// off-platform (hardware wallet, Ledger, etc.) and just records the
+// address here. Carnivon holds the keys; this table is metadata only.
+model HouseWallet {
+  id        String   @id @default(cuid())
+  chain     String   // "bitcoin" | "ethereum" | "base" | "tron"
+  asset     String   // "BTC" | "ETH" | "USDC" | "USDT"
+  address   String
+  memo      String?  // Tron/XRP-style memo field if required
+  label     String?  // human label e.g. "Cold Wallet 01"
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deposits  Deposit[]
+
+  @@unique([chain, asset, address])
+}
+
+// Investor-submitted deposit. Lifecycle: investor PENDING → operator
+// verifies on-chain → CONFIRMED (creates Subscription) or REJECTED.
+model Deposit {
+  id             String        @id @default(cuid())
+  investor       Investor      @relation(fields: [investorId], references: [id])
+  investorId     String
+  cycle          Cycle         @relation(fields: [cycleId], references: [id])
+  cycleId        String
+  houseWallet    HouseWallet?  @relation(fields: [houseWalletId], references: [id])
+  houseWalletId  String?
+
+  chain          String
+  asset          String
+  amountUSDCents BigInt        // investor's declared USD value; operator confirms
+  amountCrypto   String?       // crypto amount as string to avoid float precision
+  txHash         String        @unique
+
+  status         DepositStatus @default(PENDING)
+  confirmedAt    DateTime?
+  rejectedAt     DateTime?
+  adminNote      String?
+  adminEmail     String?
+
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String?       @unique
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([investorId, status])
+  @@index([cycleId, status])
 }
 
 model LivestockBatch {
