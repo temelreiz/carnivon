@@ -1,10 +1,10 @@
 /**
- * Carnivon per-animal pricing.
+ * Carnivon per-head pricing.
  *
  * Cycle model (standard):
  *   - Enter at 300 kg live weight
  *   - Sell at ~450 kg live weight after 90 days
- *   - Daily ops cost (feed, care, insurance, amortised): $10/animal/day
+ *   - Daily ops cost (feed, care, insurance, amortised): $10/head/day
  *   - Platform margin on the all-in cost: 10%
  *
  * Live-weight price derivation from the CEPEA arroba indicator:
@@ -41,15 +41,15 @@ export type PriceInputs = {
 export type PriceBreakdown = {
   liveKgPriceBRL: number;
   liveKgPriceUSD: number;
-  animalCostUSD: number;
+  headCostUSD: number;
   opsCostUSD: number;
   totalCostUSD: number;
   marginUSD: number;
   investorPriceUSD: number;
 };
 
-/** Compute one animal's investor-facing price, given a spot arroba + FX rate. */
-export function computeAnimalPrice(inputs: PriceInputs): PriceBreakdown {
+/** Compute one head of cattle's investor-facing price, given a spot arroba + FX rate. */
+export function computeHeadPrice(inputs: PriceInputs): PriceBreakdown {
   const entryWeightKg = inputs.entryWeightKg ?? CYCLE_DEFAULTS.entryWeightKg;
   const durationDays = inputs.durationDays ?? CYCLE_DEFAULTS.durationDays;
   const feedCostPerDayUSD =
@@ -60,16 +60,16 @@ export function computeAnimalPrice(inputs: PriceInputs): PriceBreakdown {
     (inputs.arrobaBRL * CYCLE_DEFAULTS.carcassYield) / CYCLE_DEFAULTS.kgPerArroba;
   const liveKgPriceUSD = liveKgPriceBRL * inputs.usdPerBRL;
 
-  const animalCostUSD = liveKgPriceUSD * entryWeightKg;
+  const headCostUSD = liveKgPriceUSD * entryWeightKg;
   const opsCostUSD = feedCostPerDayUSD * durationDays;
-  const totalCostUSD = animalCostUSD + opsCostUSD;
+  const totalCostUSD = headCostUSD + opsCostUSD;
   const marginUSD = totalCostUSD * (marginBps / 10000);
   const investorPriceUSD = totalCostUSD + marginUSD;
 
   return {
     liveKgPriceBRL,
     liveKgPriceUSD,
-    animalCostUSD,
+    headCostUSD,
     opsCostUSD,
     totalCostUSD,
     marginUSD,

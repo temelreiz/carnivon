@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
-import { computeAnimalPrice, formatUSD, type PriceBreakdown } from "@/lib/pricing";
+import { computeHeadPrice, formatUSD, type PriceBreakdown } from "@/lib/pricing";
 
-export type CurrentAnimalPrice = {
+export type CurrentHeadPrice = {
   priceUSD: number;
   display: string;
   asOf: string; // yyyy-mm-dd — oldest of (cattle date, fx date)
@@ -10,11 +10,11 @@ export type CurrentAnimalPrice = {
 };
 
 /**
- * Returns the current computed price per animal, pulling the latest CEPEA
- * arroba and BRL→USD FX from the DB. Returns null if either side is missing
- * so the caller can fall back to a copy-only "1 animal" display.
+ * Returns the current computed price per head of cattle, pulling the latest
+ * CEPEA arroba and BRL→USD FX from the DB. Returns null if either side is
+ * missing so the caller can fall back to a copy-only "1 head" display.
  */
-export async function getCurrentAnimalPrice(): Promise<CurrentAnimalPrice | null> {
+export async function getCurrentHeadPrice(): Promise<CurrentHeadPrice | null> {
   if (!process.env.DATABASE_URL) return null;
 
   const [cattle, fx] = await Promise.all([
@@ -32,7 +32,7 @@ export async function getCurrentAnimalPrice(): Promise<CurrentAnimalPrice | null
   if (!cattle || !fx) return null;
 
   const arrobaBRL = cattle.pricePerArrobaBRL / 100;
-  const breakdown = computeAnimalPrice({
+  const breakdown = computeHeadPrice({
     arrobaBRL,
     usdPerBRL: fx.rate,
   });
@@ -43,7 +43,7 @@ export async function getCurrentAnimalPrice(): Promise<CurrentAnimalPrice | null
 
   return {
     priceUSD: breakdown.investorPriceUSD,
-    display: `1 animal ≈ ${formatUSD(breakdown.investorPriceUSD)}`,
+    display: `1 head ≈ ${formatUSD(breakdown.investorPriceUSD)}`,
     asOf,
     breakdown,
     source: { cattle: cattleDate, fx: fxDate },

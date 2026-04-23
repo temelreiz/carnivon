@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { mockProduct } from "@/lib/mock-data";
 import { prisma } from "@/lib/db";
-import { getCurrentAnimalPrice } from "@/lib/product-pricing";
+import { getCurrentHeadPrice } from "@/lib/product-pricing";
 
 // nodejs runtime (Prisma) — edge cache headers still applied at the CDN layer.
 export const runtime = "nodejs";
 export const revalidate = 60;
 
 export async function GET() {
-  const pricing = await getCurrentAnimalPrice().catch(() => null);
+  const pricing = await getCurrentHeadPrice().catch(() => null);
   const minTicket = pricing?.display ?? mockProduct.min_ticket;
 
   if (!process.env.DATABASE_URL) {

@@ -38,7 +38,7 @@ export const mockProduct: Product = {
   status: "Open",
   aum: "$1,200,000",
   deployed: "35%",
-  min_ticket: "1 animal",
+  min_ticket: "1 head",
   start_date: "2026-06-01",
   maturity_date: "2026-08-30",
 };

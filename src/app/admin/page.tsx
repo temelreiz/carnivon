@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatUSD } from "@/lib/pricing";
-import { getCurrentAnimalPrice } from "@/lib/product-pricing";
+import { getCurrentHeadPrice } from "@/lib/product-pricing";
 
 export default async function AdminDashboard() {
   const [latestCattle, latestFx, pricing] = await Promise.all([
@@ -12,7 +12,7 @@ export default async function AdminDashboard() {
       where: { pair: "BRL_USD" },
       orderBy: { date: "desc" },
     }),
-    getCurrentAnimalPrice().catch(() => null),
+    getCurrentHeadPrice().catch(() => null),
   ]);
 
   return (
@@ -52,7 +52,7 @@ export default async function AdminDashboard() {
           title="Investor price"
           body={
             pricing
-              ? `1 animal ≈ ${formatUSD(pricing.priceUSD)} as of ${pricing.asOf}`
+              ? `1 head ≈ ${formatUSD(pricing.priceUSD)} as of ${pricing.asOf}`
               : "Needs both an arroba reading and an FX rate."
           }
           href=""
