@@ -6,6 +6,44 @@ const to = process.env.ACCESS_REQUEST_TO || "investors@carnivon.io";
 
 const resend = apiKey ? new Resend(apiKey) : null;
 
+export async function sendPasswordReset({
+  email,
+  resetUrl,
+}: {
+  email: string;
+  resetUrl: string;
+}) {
+  if (!resend) {
+    console.log("[email:no-resend-key] password reset →", { email, resetUrl });
+    return;
+  }
+
+  const { error } = await resend.emails.send({
+    from,
+    to: email,
+    subject: "Reset your Carnivon password",
+    text: `Reset your Carnivon password:\n\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, you can ignore the email.`,
+    html: `
+      <div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;color:#111;max-width:520px">
+        <h2 style="margin:0 0 12px;font-family:Georgia,serif">Reset your password</h2>
+        <p>Click the link below to choose a new password for your Carnivon vault account. This link expires in 1 hour.</p>
+        <p style="margin:24px 0">
+          <a href="${escape(resetUrl)}" style="background:#d4a84a;color:#0e1a11;padding:10px 18px;text-decoration:none;font-weight:500">
+            Reset password
+          </a>
+        </p>
+        <p style="color:#666;font-size:12px">If the button doesn't work, paste this URL into your browser:<br/><span style="word-break:break-all">${escape(resetUrl)}</span></p>
+        <hr style="border:none;border-top:1px solid #eee;margin:24px 0" />
+        <div style="color:#999;font-size:12px">If you didn't request this, you can safely ignore this email — nothing will change.</div>
+      </div>
+    `,
+  });
+
+  if (error) {
+    console.error("[email:password-reset-failed]", error);
+  }
+}
+
 export type AccessRequestPayload = {
   name: string;
   email: string;
