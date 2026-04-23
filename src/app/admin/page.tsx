@@ -4,16 +4,22 @@ import { formatUSD } from "@/lib/pricing";
 import { getCurrentHeadPrice } from "@/lib/product-pricing";
 
 export default async function AdminDashboard() {
-  const [latestCattle, latestFx, pricing] = await Promise.all([
-    prisma.cattlePrice.findFirst({
-      orderBy: [{ date: "desc" }, { fetchedAt: "desc" }],
-    }),
-    prisma.fxRate.findFirst({
-      where: { pair: "BRL_USD" },
-      orderBy: { date: "desc" },
-    }),
-    getCurrentHeadPrice().catch(() => null),
-  ]);
+  const [latestCattle, latestFx, pricing, cycleCount, activeCycle] =
+    await Promise.all([
+      prisma.cattlePrice.findFirst({
+        orderBy: [{ date: "desc" }, { fetchedAt: "desc" }],
+      }),
+      prisma.fxRate.findFirst({
+        where: { pair: "BRL_USD" },
+        orderBy: { date: "desc" },
+      }),
+      getCurrentHeadPrice().catch(() => null),
+      prisma.cycle.count(),
+      prisma.cycle.findFirst({
+        where: { status: { in: ["FUNDING", "ACTIVE"] } },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
   return (
     <div className="container-max py-16">
@@ -27,7 +33,19 @@ export default async function AdminDashboard() {
         replaces this.
       </p>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        <Tile
+          title="Cycles"
+          body={
+            activeCycle
+              ? `Active: ${activeCycle.symbol} (${activeCycle.status}, ${activeCycle.durationDays}d)`
+              : cycleCount > 0
+                ? `${cycleCount} cycle(s), none in funding/active — open one to publish.`
+                : "No cycles yet — create the first one."
+          }
+          href="/admin/cycles"
+          cta="Manage cycles →"
+        />
         <Tile
           title="Pricing"
           body={
