@@ -38,6 +38,12 @@ export default async function VaultLayout({
                 <Link href="/vault" className="hover:text-gold">
                   Dashboard
                 </Link>
+                <Link href="/vault/invest" className="hover:text-gold">
+                  Invest
+                </Link>
+                <Link href="/vault/deposits" className="hover:text-gold">
+                  Deposits
+                </Link>
                 <Link href="/vault/positions" className="hover:text-gold">
                   Positions
                 </Link>
