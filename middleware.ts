@@ -17,14 +17,15 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isVaultPath = pathname.startsWith("/vault");
 
-  // Marketing domain in prod only hosts /vault via vault.carnivon.io rewrites;
-  // /admin lives on the marketing domain (vault.* 404s it).
+  // Marketing domain in prod doesn't host /vault — that's the vault subdomain.
+  // /admin IS hosted on the vault subdomain (session cookie lives there) and
+  // 404s on the marketing domain.
   if (process.env.NODE_ENV === "production") {
     const isVaultHost = host.startsWith("vault.");
     if (isVaultPath && !isVaultHost) {
       return NextResponse.rewrite(new URL("/404", req.nextUrl));
     }
-    if (pathname.startsWith("/admin") && isVaultHost) {
+    if (pathname.startsWith("/admin") && !isVaultHost) {
       return NextResponse.rewrite(new URL("/404", req.nextUrl));
     }
   }
