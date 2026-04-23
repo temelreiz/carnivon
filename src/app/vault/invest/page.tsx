@@ -9,6 +9,36 @@ import { formatUSD } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
+type CryptoMethod = {
+  kind: "crypto";
+  chain: string;
+  asset: string;
+  label: string;
+  network: string;
+};
+type FiatMethod = {
+  kind: "fiat";
+  id: string;
+  label: string;
+  sub: string;
+};
+type Method = CryptoMethod | FiatMethod;
+
+// Canonical payment-method list the investor sees, regardless of whether we
+// have an address configured. Crypto entries resolve to a live HouseWallet
+// where possible; otherwise they render as "Coming soon" and stay disabled.
+// Fiat entries are always disabled for now.
+const METHODS: Method[] = [
+  { kind: "crypto", chain: "bitcoin", asset: "BTC", label: "BTC", network: "Bitcoin" },
+  { kind: "crypto", chain: "ethereum", asset: "ETH", label: "ETH", network: "Ethereum" },
+  { kind: "crypto", chain: "base", asset: "USDC", label: "USDC", network: "Base" },
+  { kind: "crypto", chain: "ethereum", asset: "USDC", label: "USDC", network: "Ethereum (ERC-20)" },
+  { kind: "crypto", chain: "tron", asset: "USDT", label: "USDT", network: "Tron (TRC-20)" },
+  { kind: "crypto", chain: "ethereum", asset: "USDT", label: "USDT", network: "Ethereum (ERC-20)" },
+  { kind: "fiat", id: "card", label: "Credit / Debit card", sub: "Visa · Mastercard" },
+  { kind: "fiat", id: "bank", label: "Bank transfer", sub: "SWIFT · SEPA" },
+];
+
 export default async function InvestPage() {
   const session = await auth();
   if (!session?.user) redirect("/vault/login?from=/vault/invest");
@@ -20,7 +50,6 @@ export default async function InvestPage() {
   });
 
   if (investor.kycStatus !== "APPROVED") {
-    // Allow UNSET-jurisdiction to reach KYC flow first.
     return (
       <div className="container-max py-24 max-w-xl">
         <div className="eyebrow mb-4">Invest</div>
@@ -43,10 +72,7 @@ export default async function InvestPage() {
       where: { status: { in: ["FUNDING", "ACTIVE"] } },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.houseWallet.findMany({
-      where: { active: true },
-      orderBy: [{ asset: "asc" }, { chain: "asc" }],
-    }),
+    prisma.houseWallet.findMany({ where: { active: true } }),
     getCurrentHeadPrice().catch(() => null),
   ]);
 
@@ -65,20 +91,19 @@ export default async function InvestPage() {
     );
   }
 
-  if (wallets.length === 0) {
-    return (
-      <div className="container-max py-24 max-w-xl">
-        <div className="eyebrow mb-4">Invest</div>
-        <h1 className="font-serif text-3xl text-cream-50 mb-4">
-          Wire instructions unavailable.
-        </h1>
-        <p className="text-sm text-cream-100/70">
-          Deposit addresses aren&apos;t configured yet. Please contact
-          investors@carnivon.io.
-        </p>
-      </div>
-    );
+  // Index wallets by (chain, asset) so each canonical method can resolve its
+  // live address in O(1). Only the first matching active wallet is used.
+  const walletByKey = new Map<string, (typeof wallets)[number]>();
+  for (const w of wallets) {
+    const k = `${w.chain}|${w.asset}`;
+    if (!walletByKey.has(k)) walletByKey.set(k, w);
   }
+
+  const resolved = METHODS.map((m) => {
+    if (m.kind === "fiat") return { method: m, wallet: null as null };
+    const w = walletByKey.get(`${m.chain}|${m.asset}`) ?? null;
+    return { method: m, wallet: w };
+  });
 
   return (
     <div className="container-max py-16 max-w-3xl">
@@ -99,7 +124,7 @@ export default async function InvestPage() {
         ) : null}
       </p>
 
-      <InvestForm wallets={wallets} cycleId={cycle.id} />
+      <InvestForm resolved={resolved} cycleId={cycle.id} />
 
       <p className="mt-10 text-xs text-cream-100/50">
         Seen your deposit already?{" "}
@@ -111,57 +136,97 @@ export default async function InvestPage() {
   );
 }
 
-function InvestForm({
-  wallets,
-  cycleId,
-}: {
-  wallets: {
+type ResolvedMethod = {
+  method: Method;
+  wallet: {
     id: string;
     chain: string;
     asset: string;
     address: string;
     memo: string | null;
-    label: string | null;
-  }[];
+  } | null;
+};
+
+function InvestForm({
+  resolved,
+  cycleId,
+}: {
+  resolved: ResolvedMethod[];
   cycleId: string;
 }) {
+  const firstAvailableIndex = resolved.findIndex(
+    (r) => r.method.kind === "crypto" && r.wallet
+  );
+
   return (
     <form action={submitDeposit} className="card p-8 grid gap-6">
       <input type="hidden" name="cycleId" value={cycleId} />
 
       <div>
         <div className="text-xs uppercase tracking-[0.18em] text-cream-100/60 mb-3">
-          1. Pick a network
+          1. Pick a method
         </div>
         <div className="grid gap-2">
-          {wallets.map((w, i) => (
-            <label
-              key={w.id}
-              className="flex items-center gap-3 p-3 border border-forest-700/60 hover:border-gold/40 cursor-pointer has-[:checked]:border-gold/60 has-[:checked]:bg-forest-900/40"
-            >
-              <input
-                type="radio"
-                name="walletChoice"
-                value={`${w.id}|${w.chain}|${w.asset}|${w.address}|${w.memo ?? ""}`}
-                defaultChecked={i === 0}
-                className="accent-gold"
-              />
-              <div className="flex-1">
-                <div className="font-serif text-base text-cream-50">
-                  {w.asset}{" "}
-                  <span className="text-cream-100/40 text-xs font-sans">
-                    on {w.chain}
-                  </span>
+          {resolved.map((r, i) => {
+            const isAvailable = r.method.kind === "crypto" && !!r.wallet;
+            const value = r.wallet
+              ? `${r.wallet.id}|${r.wallet.chain}|${r.wallet.asset}|${r.wallet.address}|${r.wallet.memo ?? ""}`
+              : "";
+            const title =
+              r.method.kind === "crypto"
+                ? `${r.method.label}`
+                : r.method.label;
+            const sub =
+              r.method.kind === "crypto"
+                ? `on ${r.method.network}`
+                : r.method.sub;
+            const detail = r.wallet
+              ? r.wallet.memo
+                ? `${r.wallet.address} · memo ${r.wallet.memo}`
+                : r.wallet.address
+              : "Coming soon";
+
+            return (
+              <label
+                key={`${r.method.kind}-${i}`}
+                className={`flex items-center gap-3 p-3 border ${
+                  isAvailable
+                    ? "border-forest-700/60 hover:border-gold/40 cursor-pointer has-[:checked]:border-gold/60 has-[:checked]:bg-forest-900/40"
+                    : "border-forest-700/40 opacity-50 cursor-not-allowed"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="walletChoice"
+                  value={value}
+                  disabled={!isAvailable}
+                  defaultChecked={isAvailable && i === firstAvailableIndex}
+                  className="accent-gold"
+                />
+                <div className="flex-1">
+                  <div className="font-serif text-base text-cream-50 flex items-center gap-2">
+                    {title}
+                    <span className="text-cream-100/40 text-xs font-sans">
+                      {sub}
+                    </span>
+                    {!isAvailable ? (
+                      <span className="ml-auto text-xs uppercase tracking-[0.18em] text-cream-100/40 border border-cream-100/20 px-2 py-0.5">
+                        Coming soon
+                      </span>
+                    ) : null}
+                  </div>
+                  <div
+                    className={`text-xs mt-0.5 break-all ${
+                      r.wallet ? "text-cream-100/40 font-mono" : "text-cream-100/30"
+                    }`}
+                  >
+                    {detail}
+                  </div>
                 </div>
-                <div className="text-xs text-cream-100/40 font-mono break-all mt-0.5">
-                  {w.address}
-                  {w.memo ? ` · memo ${w.memo}` : ""}
-                </div>
-              </div>
-            </label>
-          ))}
+              </label>
+            );
+          })}
         </div>
-        {/* Hidden fields updated from the radio choice via the client helper. */}
         <WalletChoiceHydrator />
       </div>
 
@@ -226,11 +291,6 @@ function InvestForm({
   );
 }
 
-/**
- * Tiny client island that expands the selected "walletChoice" radio value
- * into the four hidden form fields (houseWalletId, chain, asset, plus we
- * discard address/memo server-side — they're just displayed for the user).
- */
 function WalletChoiceHydrator() {
   return (
     <>
