@@ -23,10 +23,11 @@ const config: NextConfig = {
         },
         {
           // Match any path that is NOT already under /vault and NOT a Next.js
-          // internal asset/route (_next, api, favicon, etc.). Without the
-          // extra exclusions, /_next/static/css/* got rewritten to
-          // /vault/_next/... and the vault subdomain rendered unstyled.
-          source: "/:path((?!vault|_next|api|favicon|robots|sitemap|logo).*)*",
+          // internal asset/route. `admin` is excluded so the operator console
+          // stays reachable on the vault subdomain where the session cookie
+          // lives (AUTH_URL=https://vault.carnivon.io).
+          source:
+            "/:path((?!vault|admin|_next|api|favicon|robots|sitemap|logo).*)*",
           has: [{ type: "host", value: "vault.carnivon.io" }],
           destination: "/vault/:path*",
         },
